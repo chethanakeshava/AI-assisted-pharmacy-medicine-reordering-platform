@@ -90,6 +90,7 @@ class Order(Base):
     prescription_id: Mapped[int | None] = mapped_column(ForeignKey("prescriptions.id"), nullable=True)
     status: Mapped[str] = mapped_column(String(24), default="AWAITING_PHARMACIST")
     invoice_no: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
