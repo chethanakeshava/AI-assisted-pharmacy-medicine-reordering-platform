@@ -1,4 +1,4 @@
-from .conftest import login, upload_rx
+from .conftest import PNG, login, upload_rx
 
 
 def make_order(client, product="metformin", qty=2):
@@ -73,7 +73,7 @@ def test_reupload_puts_on_hold_notifies_and_blocks_approval(client):
     assert client.post(f"/pharmacist/orders/{o['id']}/items/{item}/approve", headers=ph).status_code == 409
     # customer replaces the photo -> back in the queue
     back = client.post(f"/orders/{o['id']}/reupload", headers=h,
-                       files={"file": ("n.png", b"\x89PNG\r\n\x1a\n" + b"x" * 50, "image/png")})
+                       files={"file": ("n.png", PNG, "image/png")})
     assert back.json()["status"] == "AWAITING_PHARMACIST"
     assert client.post(f"/pharmacist/orders/{o['id']}/items/{item}/approve", headers=ph).status_code == 200
 
@@ -81,5 +81,5 @@ def test_reupload_puts_on_hold_notifies_and_blocks_approval(client):
 def test_reupload_only_when_on_hold(client):
     h, o = make_order(client)
     r = client.post(f"/orders/{o['id']}/reupload", headers=h,
-                    files={"file": ("n.png", b"\x89PNG\r\n\x1a\n" + b"x" * 50, "image/png")})
+                    files={"file": ("n.png", PNG, "image/png")})
     assert r.status_code == 409

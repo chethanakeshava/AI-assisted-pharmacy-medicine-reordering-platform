@@ -31,7 +31,12 @@ def login(client, phone):
     return {"Authorization": "Bearer " + client.post("/auth/verify-otp", json={"phone": phone, "code": otp}).json()["token"]}
 
 
-PNG = b"\x89PNG\r\n\x1a\n" + b"fake-prescription-bytes" * 10
+import io
+from scripts.make_sample_prescriptions import page
+
+_buf = io.BytesIO()
+page().save(_buf, "PNG")
+PNG = _buf.getvalue()  # a real, sharp, readable fake prescription image
 
 
 def upload_rx(client, headers, data=PNG, name="rx.png"):
