@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     otp_secret: str = "dev-only-otp"
     fernet_key: str = ""
     gemini_api_key: str = ""
+    ai_provider: str = "auto"  # auto | gemini | mock
+    gemini_model: str = "gemini-2.5-flash"
+    ai_timeout_seconds: int = 20
+    ai_confidence_threshold: float = 0.7
+    match_threshold: float = 0.75
     upload_dir: str = "./uploads"
     max_upload_bytes: int = 5 * 1024 * 1024
     otp_ttl_seconds: int = 300
