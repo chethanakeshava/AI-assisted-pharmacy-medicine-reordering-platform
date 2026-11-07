@@ -1,6 +1,7 @@
 from fastapi import HTTPException, UploadFile
 
 from ..config import settings
+from .imaging import TIPS, quality_issues
 
 MAGIC = [(b"\xff\xd8\xff", "image/jpeg"), (b"\x89PNG\r\n\x1a\n", "image/png")]
 
@@ -24,4 +25,12 @@ async def read_image(file: UploadFile) -> tuple[bytes, str]:
     mime = sniff(data)
     if not mime:
         raise HTTPException(415, "Please upload a JPG, PNG or WEBP photo of the prescription")
+    return data, mime
+
+
+async def read_prescription_image(file: UploadFile) -> tuple[bytes, str]:
+    data, mime = await read_image(file)
+    issues = quality_issues(data)
+    if issues:
+        raise HTTPException(422, {"code": "unreadable_image", "reasons": issues, "tips": TIPS})
     return data, mime
