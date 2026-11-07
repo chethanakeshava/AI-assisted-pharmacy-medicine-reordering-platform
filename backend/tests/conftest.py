@@ -1,5 +1,6 @@
 import os
 os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+os.environ["UPLOAD_DIR"] = "./test_uploads"
 import pytest
 from fastapi.testclient import TestClient
 from app.db import SessionLocal
@@ -28,3 +29,10 @@ def client():
 def login(client, phone):
     otp = client.post("/auth/request-otp", json={"phone": phone}).json()["dev_otp"]
     return {"Authorization": "Bearer " + client.post("/auth/verify-otp", json={"phone": phone, "code": otp}).json()["token"]}
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"fake-prescription-bytes" * 10
+
+
+def upload_rx(client, headers, data=PNG, name="rx.png"):
+    return client.post("/prescriptions", headers=headers, files={"file": (name, data, "image/png")})
