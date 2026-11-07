@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     otp_secret: str = "dev-only-otp"
     fernet_key: str = ""
     gemini_api_key: str = ""
+    upload_dir: str = "./uploads"
+    max_upload_bytes: int = 5 * 1024 * 1024
     otp_ttl_seconds: int = 300
     otp_max_attempts: int = 5
 
