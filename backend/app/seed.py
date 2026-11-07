@@ -16,6 +16,9 @@ PRODUCTS = [
     ("Tramadol 50 mg", "Tramadol", "strip of 10", 10, "H1", 75),
     ("Morphine 10 mg", "Morphine", "strip of 10", 10, "NARCOTIC", 150),
     ("Paracetamol 500 mg", "Paracetamol", "strip of 15", 15, "OTC", 30),
+    ("Metformin 500 mg (Generic)", "Metformin", "strip of 15", 15, "H", 65),
+    ("Telmisartan 40 mg (Generic)", "Telmisartan", "strip of 10", 10, "H", 140),
+    ("Amlodipine 5 mg (Generic)", "Amlodipine", "strip of 15", 15, "H", 30),
     ("ORS sachet", "ORS", "pack of 5", 5, "OTC", 40),
     ("Vitamin D3 60K", "Cholecalciferol", "pack of 4", 4, "OTC", 130),
 ]
