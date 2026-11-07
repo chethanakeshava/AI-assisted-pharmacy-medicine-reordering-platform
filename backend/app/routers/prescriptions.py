@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import AccessLog, FamilyProfile, Prescription, User
 from ..security import current_user, require_role
-from ..services import crypto
-from ..services.uploads import read_image
+from ..services import crypto, extractor, matcher
+from ..services.uploads import read_prescription_image
 
 router = APIRouter(prefix="/prescriptions", tags=["prescriptions"])
 
@@ -19,12 +19,26 @@ async def upload(file: UploadFile = File(...), profile_id: int | None = Form(Non
         prof = db.get(FamilyProfile, profile_id)
         if not prof or prof.user_id != user.id:
             raise HTTPException(404, "Profile not found")
-    data, _ = await read_image(file)
-    rx = Prescription(user_id=user.id, profile_id=profile_id, enc_path=crypto.save_encrypted(data),
-                      ai_draft={"readable": None, "items": [], "source": "not_run"})
+    data, mime = await read_prescription_image(file)
+    draft = matcher.build_draft(db, extractor.extract(data, mime, file.filename or ""))
+    rx = Prescription(user_id=user.id, profile_id=profile_id, enc_path=crypto.save_encrypted(data), ai_draft=draft)
     db.add(rx)
     db.commit()
-    return {"id": rx.id, "status": rx.status}
+    return {"id": rx.id, "status": rx.status, "readable": draft["readable"], "item_count": len(draft["items"])}
+
+
+@router.get("/{rx_id}/suggestions")
+def suggestions(rx_id: int, user: User = Depends(require_role("customer")), db: Session = Depends(get_db)):
+    """What the customer sees: a pre-filled cart to review. Generics are pharmacist-only; blocked items are hidden."""
+    rx = db.get(Prescription, rx_id)
+    if not rx or rx.user_id != user.id:
+        raise HTTPException(404, "Prescription not found")
+    d = rx.ai_draft or {"items": [], "readable": None}
+    return {"readable": d.get("readable"),
+            "message": "Suggested from your photo. A pharmacist will check every item before anything is sent.",
+            "items": [{"product_id": i["product_id"], "name": i["product_name"], "qty": i["qty"],
+                       "needs_check": i["low_confidence"]} for i in d["items"]
+                      if i["product_id"] and not i["blocked"]]}
 
 
 @router.get("")

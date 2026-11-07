@@ -6,10 +6,10 @@ from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import FamilyProfile, Order, OrderItem, Prescription, Product, User
 from ..security import require_role
-from ..services import crypto
+from ..services import crypto, extractor, matcher
 from ..services.gate import GATED, is_sellable
 from ..services.serialize import order_out
-from ..services.uploads import read_image
+from ..services.uploads import read_prescription_image
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 MAX_QTY = 20
@@ -80,9 +80,9 @@ async def reupload(order_id: int, file: UploadFile = File(...),
     o = _own(db, order_id, user)
     if o.status != "ON_HOLD":
         raise HTTPException(409, "This order is not waiting for a new prescription")
-    data, _ = await read_image(file)
-    rx = Prescription(user_id=user.id, profile_id=o.profile_id, enc_path=crypto.save_encrypted(data),
-                      ai_draft={"readable": None, "items": [], "source": "not_run"})
+    data, mime = await read_prescription_image(file)
+    draft = matcher.build_draft(db, extractor.extract(data, mime, file.filename or ""))
+    rx = Prescription(user_id=user.id, profile_id=o.profile_id, enc_path=crypto.save_encrypted(data), ai_draft=draft)
     db.add(rx)
     db.flush()
     o.prescription_id, o.status = rx.id, "AWAITING_PHARMACIST"
