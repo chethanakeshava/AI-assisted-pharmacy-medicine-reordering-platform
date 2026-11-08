@@ -3,13 +3,15 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { ErrorBox } from "../components/ui";
+import { LangSwitch, useT } from "../i18n";
 
 const DEMOS = [["Customer · Debasish", "9000000001"], ["Customer · Rina", "9000000002"],
-  ["Customer · Arif", "9000000003"], ["Pharmacist", "9000000010"], ["Store staff", "9000000020"]];
-const HOME = { customer: "/", pharmacist: "/pharmacist", store_staff: "/store" };
+  ["Customer · Arif", "9000000003"], ["Pharmacist", "9000000010"], ["Store staff", "9000000020"], ["Operations", "9000000030"]];
+const HOME = { customer: "/", pharmacist: "/pharmacist", store_staff: "/store", ops: "/ops" };
 
 export default function Login() {
   const { user, login } = useAuth();
+  const { t } = useT();
   const nav = useNavigate();
   const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
@@ -43,35 +45,35 @@ export default function Login() {
 
   return (
     <main className="page" style={{ maxWidth: 440, paddingTop: "12vh" }}>
-      <h1 style={{ color: "var(--primary)" }}>MediBridge</h1>
-      <p className="sub">Refill your regular medicines in a minute.</p>
+      <div className="row between"><h1 style={{ color: "var(--primary)" }}>MediBridge</h1><LangSwitch /></div>
+      <p className="sub">{t("login.tagline")}</p>
       <div className="card">
         {step === "phone" ? (
           <form onSubmit={send}>
             <div className="field">
-              <label htmlFor="phone">Mobile number</label>
+              <label htmlFor="phone">{t("login.mobile")}</label>
               <input id="phone" type="tel" inputMode="numeric" maxLength={10} value={phone} autoFocus
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))} placeholder="10-digit number" />
             </div>
             <ErrorBox error={error} />
-            <button className="btn hero" disabled={phone.length !== 10 || busy}>{busy ? "Sending…" : "Send code"}</button>
+            <button className="btn hero" disabled={phone.length !== 10 || busy}>{busy ? "…" : t("login.send")}</button>
           </form>
         ) : (
           <form onSubmit={verify}>
-            <p>We sent a 6-digit code to <strong>{phone}</strong>.</p>
+            <p>{t("login.sentTo")} <strong>{phone}</strong></p>
             {devOtp && (
               <div className="dev-box">Test mode: no SMS is sent. Your code is <strong>{devOtp}</strong>{" "}
                 <button type="button" className="chip" onClick={() => setCode(devOtp)}>Fill it in</button></div>
             )}
             <div className="field">
-              <label htmlFor="code">Code</label>
+              <label htmlFor="code">{t("login.code")}</label>
               <input id="code" type="text" inputMode="numeric" maxLength={6} value={code} autoFocus
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} autoComplete="one-time-code" />
             </div>
             <ErrorBox error={error} />
-            <button className="btn hero" disabled={code.length !== 6 || busy}>{busy ? "Checking…" : "Sign in"}</button>
+            <button className="btn hero" disabled={code.length !== 6 || busy}>{busy ? "…" : t("login.signIn")}</button>
             <p className="small" style={{ marginTop: ".8rem" }}>
-              <a href="#" onClick={(e) => { e.preventDefault(); setStep("phone"); setCode(""); setError(null); }}>Use a different number</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); setStep("phone"); setCode(""); setError(null); }}>{t("login.other")}</a>
             </p>
           </form>
         )}

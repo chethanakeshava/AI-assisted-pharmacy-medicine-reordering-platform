@@ -8,8 +8,12 @@ import Orders, { OrderDetail } from "./pages/Orders";
 import Queue from "./pages/Queue";
 import StoreHome from "./pages/StoreHome";
 import Upload from "./pages/Upload";
+import Refills from "./pages/Refills";
+import Messages from "./pages/Messages";
+import Stock from "./pages/Stock";
+import Ops from "./pages/Ops";
 
-const HOME = { customer: "/", pharmacist: "/pharmacist", store_staff: "/store" };
+const HOME = { customer: "/", pharmacist: "/pharmacist", store_staff: "/store", ops: "/ops" };
 
 function Guard({ role, wide, children }) {
   const { user, loading } = useAuth();
@@ -28,7 +32,11 @@ export default function App() {
       <Route path="/cart" element={<Guard role="customer"><Cart /></Guard>} />
       <Route path="/orders" element={<Guard role="customer"><Orders /></Guard>} />
       <Route path="/orders/:id" element={<Guard role="customer"><OrderDetail /></Guard>} />
+      <Route path="/refills" element={<Guard role="customer"><Refills /></Guard>} />
+      <Route path="/messages" element={<Guard role="customer"><Messages /></Guard>} />
+      <Route path="/pharmacist/stock" element={<Guard role="pharmacist"><Stock /></Guard>} />
       <Route path="/pharmacist" element={<Guard role="pharmacist" wide><Queue /></Guard>} />
+      <Route path="/ops" element={<Guard role="ops" wide><Ops /></Guard>} />
       <Route path="/store" element={<Guard role="store_staff"><StoreHome /></Guard>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

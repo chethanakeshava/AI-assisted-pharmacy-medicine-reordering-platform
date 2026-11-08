@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { LangSwitch, useT } from "../i18n";
 import { STATUS } from "../lib/format";
 
 export const Spinner = ({ label = "Loading…" }) => (
@@ -29,14 +30,16 @@ export const ScheduleBadge = ({ schedule }) =>
   schedule && schedule !== "OTC" ? <span className="badge sched">Schedule {schedule}</span> : null;
 
 const NAV = {
-  customer: [["/", "Home"], ["/orders", "My orders"]],
-  pharmacist: [["/pharmacist", "Verification queue"]],
+  customer: [["/", "nav.home"], ["/refills", "nav.refills"], ["/orders", "nav.orders"], ["/messages", "nav.messages"]],
+  pharmacist: [["/pharmacist", "Verification queue"], ["/pharmacist/stock", "Stock & reminders"]],
   store_staff: [["/store", "Store orders"]],
+  ops: [["/ops", "Dashboard"]],
 };
 
 export function Layout({ children, wide }) {
   const { user, logout } = useAuth();
   const nav = useNavigate();
+  const { t } = useT();
   return (
     <>
       <header className="topbar">
@@ -44,12 +47,13 @@ export function Layout({ children, wide }) {
           <Link to="/" className="brand">MediBridge</Link>
           <nav className="nav" aria-label="Main">
             {(NAV[user?.role] || []).map(([to, label]) => (
-              <NavLink key={to} to={to} end className={({ isActive }) => (isActive ? "active" : "")}>{label}</NavLink>
+              <NavLink key={to} to={to} end className={({ isActive }) => (isActive ? "active" : "")}>{t(label)}</NavLink>
             ))}
           </nav>
           <div className="who">
+            {user?.role === "customer" && <LangSwitch />}
             {user?.name}
-            <button className="btn secondary small" onClick={() => { logout(); nav("/login"); }}>Sign out</button>
+            <button className="btn secondary small" onClick={() => { logout(); nav("/login"); }}>{t("nav.signOut")}</button>
           </div>
         </div>
       </header>

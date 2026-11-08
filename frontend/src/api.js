@@ -17,6 +17,7 @@ function messageOf(detail) {
   if (typeof detail === "string") return detail;
   if (Array.isArray(detail)) return detail.map((d) => d.msg).join(", ");
   if (detail.reasons) return detail.reasons.join(". ");
+  if (detail.errors) return detail.errors.join(". ");
   return "Something went wrong. Please try again.";
 }
 
@@ -37,6 +38,7 @@ async function request(path, { method = "GET", json, form, blob } = {}) {
     try { detail = (await res.json()).detail; } catch { /* non-JSON error */ }
     throw new ApiError(res.status, detail);
   }
+  if (res.status === 204) return null;
   return blob ? res.blob() : res.json();
 }
 
@@ -44,6 +46,7 @@ export const api = {
   get: (p) => request(p),
   post: (p, json) => request(p, { method: "POST", json }),
   patch: (p, json) => request(p, { method: "PATCH", json }),
+  del: (p) => request(p, { method: "DELETE" }),
   upload: (p, form) => request(p, { method: "POST", form }),
   blob: (p) => request(p, { blob: true }),
 };

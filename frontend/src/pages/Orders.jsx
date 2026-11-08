@@ -36,6 +36,10 @@ export function OrderDetail() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState(null);
+  const payNow = async () => {
+    setBusy(true); setError(null);
+    try { setO(await api.post(`/orders/${id}/pay`)); } catch (e) { setError(e); } finally { setBusy(false); }
+  };
 
   const load = useCallback(() => api.get(`/orders/${id}`).then((r) => { setO(r); setError(null); }).catch(setError), [id]);
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, [load]);
@@ -72,6 +76,20 @@ export function OrderDetail() {
           <button className="btn" disabled={!file || busy} onClick={reupload}>{busy ? "Uploading…" : "Send new photo"}</button>
         </div>
       )}
+      {o.status === "NO_STOCK" && <div className="banner warn">Your order is approved. We are finding a store that has all your medicines and will message you.</div>}
+      {o.store_name && o.status !== "NO_STOCK" && (
+        <div className="banner info">
+          {o.status === "DISPATCHED" ? `On its way from ${o.store_name}${o.handover_to ? `, with ${o.handover_to}` : ""}.`
+            : `Being prepared at ${o.store_name}${o.distance_km != null ? `, ${o.distance_km} km from you` : ""}.`}
+          {o.invoice_no && <> Invoice {o.invoice_no}.</>}
+        </div>
+      )}
+      {o.payment_method === "UPI_TEST" && o.payment_status === "PENDING" && ["APPROVED", "NO_STOCK", "PACKED"].includes(o.status) && (
+        <div className="banner info row between">
+          <span>Approved. Pay {formatINR(o.total)} by UPI (test mode).</span>
+          <button className="btn small" disabled={busy} onClick={payNow}>{busy ? "…" : "Pay now (test)"}</button>
+        </div>
+      )}
       {o.status === "REJECTED" && <div className="banner danger">This order could not be approved. Please contact your store if you have questions.</div>}
 
       {o.status !== "REJECTED" && (
@@ -96,6 +114,7 @@ export function OrderDetail() {
           </div>
         ))}
         <div className="row between" style={{ marginTop: ".6rem" }}><span className="muted">Total{rejected.length ? " (approved items)" : ""}</span><strong>{formatINR(o.total)}</strong></div>
+        <p className="small muted" style={{ margin: ".4rem 0 0" }}>{o.payment_method === "COD" ? "Pay on delivery" : o.payment_status === "PAID_TEST" ? "Paid by UPI (test)" : "UPI payment pending"}</p>
       </div>
       {REORDERABLE.includes(o.status) && <button className="btn secondary" onClick={reorder} disabled={busy}>Order the same again</button>}
     </>

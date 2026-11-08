@@ -3,9 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useCart } from "../cart";
 import { ErrorBox } from "../components/ui";
+import { useT } from "../i18n";
 
 export default function Upload() {
   const nav = useNavigate();
+  const { t } = useT();
   const cart = useCart();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -41,11 +43,11 @@ export default function Upload() {
 
   return (
     <>
-      <h1>Upload your prescription</h1>
-      <p className="sub">Take a clear photo of the whole page. Only our pharmacists can see it.</p>
+      <h1>{t("upload.title")}</h1>
+      <p className="sub">{t("upload.sub")}</p>
       <div className="card">
         <div className="field">
-          <label htmlFor="rx">Photo of prescription</label>
+          <label htmlFor="rx">{t("upload.photo")}</label>
           <input id="rx" type="file" accept="image/jpeg,image/png,image/webp" capture="environment"
             onChange={(e) => { setFile(e.target.files?.[0] ?? null); setError(null); }} disabled={busy} />
         </div>
@@ -59,7 +61,7 @@ export default function Upload() {
           </div>
         ) : <ErrorBox error={error} />}
         <button className="btn hero" disabled={!file || busy || unreadable} onClick={submit}>
-          {busy ? "Reading your prescription…" : unreadable ? "Choose a clearer photo above" : "Continue"}
+          {busy ? t("upload.reading") : unreadable ? "Choose a clearer photo above" : t("upload.continue")}
         </button>
       </div>
     </>
