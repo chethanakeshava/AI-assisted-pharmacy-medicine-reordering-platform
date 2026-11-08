@@ -71,7 +71,38 @@ def _own(db: Session, order_id: int, user: User) -> Order:
 
 @router.get("/{order_id}")
 def one(order_id: int, user: User = Depends(require_role("customer")), db: Session = Depends(get_db)):
-    return order_out(_own(db, order_id, user))
+    o = _own(db, order_id, user)
+    d = order_out(o)
+    rx = db.get(Prescription, o.prescription_id) if o.prescription_id else None
+    d["review_note"] = rx.review_note if rx else None
+    return d
+
+
+@router.post("/{order_id}/reorder", status_code=201)
+def reorder(order_id: int, user: User = Depends(require_role("customer")), db: Session = Depends(get_db)):
+    """One-tap reorder: same medicines, same prescription. A pharmacist still checks it again."""
+    old = _own(db, order_id, user)
+    if old.status not in {"APPROVED", "PACKED", "DISPATCHED"}:
+        raise HTTPException(409, "Only a completed order can be reordered")
+    rx = db.get(Prescription, old.prescription_id) if old.prescription_id else None
+    if rx and rx.status in {"REUPLOAD", "REJECTED"}:
+        raise HTTPException(409, "This prescription needs to be uploaded again")
+    new = Order(code="tmp", user_id=user.id, profile_id=old.profile_id,
+                prescription_id=old.prescription_id, status="AWAITING_PHARMACIST")
+    for it in old.items:
+        p = db.get(Product, it.product_id)
+        if it.status == "REJECTED" or not is_sellable(db, p.schedule):
+            continue
+        new.items.append(OrderItem(product_id=p.id, qty=it.qty, schedule=p.schedule, unit_price=p.price))
+    if not new.items:
+        raise HTTPException(409, "Nothing from this order can be reordered")
+    if any(i.schedule in GATED for i in new.items) and rx is None:
+        raise HTTPException(409, "A prescription is needed to reorder these medicines")
+    db.add(new)
+    db.flush()
+    new.code = f"RX-{50300 + new.id}"
+    db.commit()
+    return order_out(new)
 
 
 @router.post("/{order_id}/reupload")

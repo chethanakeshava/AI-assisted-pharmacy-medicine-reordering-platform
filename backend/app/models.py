@@ -108,6 +108,7 @@ class OrderItem(Base):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     reject_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     order: Mapped[Order] = relationship(back_populates="items")
+    product: Mapped["Product"] = relationship()
     __table_args__ = (
         # Last line of defence: even buggy code cannot pack/dispatch an unapproved H/H1 item.
         CheckConstraint(

@@ -6,4 +6,4 @@ node_modules/
 uploads/
 .venv/
 test_uploads/
-
+dist/

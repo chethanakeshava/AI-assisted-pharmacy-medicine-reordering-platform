@@ -1,6 +1,11 @@
 """Seed realistic, fake data (no real personal data). Run: python -m app.seed"""
+import io
+
+from PIL import Image, ImageDraw, ImageFont
+
 from .db import Base, SessionLocal, engine
-from .models import (FamilyProfile, Order, OrderItem, Product, Rule, Stock, Store, User)
+from .services import crypto, extractor, matcher
+from .models import (FamilyProfile, Order, OrderItem, Prescription, Product, Rule, Stock, Store, User)
 
 STORES = [("Salt Lake", 22.5867, 88.4171), ("Behala", 22.4985, 88.3118), ("Howrah Maidan", 22.5850, 88.3426),
           ("Park Street", 22.5524, 88.3516), ("Dum Dum", 22.6228, 88.4222)]
@@ -23,6 +28,18 @@ PRODUCTS = [
     ("Vitamin D3 60K", "Cholecalciferol", "pack of 4", 4, "OTC", 130),
 ]
 RULES = [("OTC", 1, 0, 0), ("H", 1, 1, 0), ("H1", 1, 1, 1), ("X", 0, 1, 0), ("NARCOTIC", 0, 1, 0)]
+
+
+def fake_rx_png(patient: str, lines: list[str]) -> bytes:
+    """A typed, obviously fake prescription image for demos (no real patient data)."""
+    img = Image.new("RGB", (900, 1100), (236, 233, 226))
+    d, f = ImageDraw.Draw(img), ImageFont.load_default(size=32)
+    d.line((50, 50, 850, 50), fill="black", width=3)
+    for i, t in enumerate(["Dr. A. Sample, MBBS (FAKE - DEMO ONLY)", "Reg. No: WB-00000", f"Patient: {patient}", "", "Rx", *lines, "", "Sign: A. Sample"]):
+        d.text((60, 80 + i * 80), t, fill="black", font=f)
+    buf = io.BytesIO()
+    img.save(buf, "PNG")
+    return buf.getvalue()
 
 
 def run():
@@ -59,18 +76,27 @@ def run():
                 FamilyProfile(user_id=users["arif"].id, name="Arif Mondal", relation="self")])
     db.flush()
 
-    def order(code, user, store, status, product, qty, item_status, approved):
+    def order(code, user, store, status, product, qty, item_status, approved, rx_status, scenario=""):
         p = prods[product]
+        raw = extractor.mock_extract(scenario) if scenario else {"readable": True, "notes": "", "items": [
+            {"name": product, "strength": None, "qty": qty, "doses_per_day": 1, "confidence": 0.93}]}
+        draft = matcher.build_draft(db, extractor.sanitize(raw))
+        png = fake_rx_png(users[user].name, [f"1. Tab {product}   x {qty}"])
+        rx = Prescription(user_id=users[user].id, enc_path=crypto.save_encrypted(png), status=rx_status,
+                          ai_draft={**draft, "source": "mock"},
+                          review_note="Image too blurry to read the dose" if rx_status == "REUPLOAD" else None)
+        db.add(rx)
+        db.flush()
         o = Order(code=code, user_id=users[user].id, store_id=stores[store].id, status=status,
-                  profile_id=mother.id if user == "debasish" else None)
+                  profile_id=mother.id if user == "debasish" else None, prescription_id=rx.id)
         it = OrderItem(product_id=p.id, qty=qty, schedule=p.schedule, unit_price=p.price, status=item_status,
                        approved_by=users["pharma"].id if approved else None)
         o.items.append(it)
         db.add(o)
 
-    order("RX-50211", "debasish", "Salt Lake", "PACKED", "Metformin 500 mg", 4, "PACKED", True)
-    order("RX-50214", "rina", "Behala", "AWAITING_PHARMACIST", "Telmisartan 40 mg", 3, "PENDING", False)
-    order("RX-50219", "arif", "Howrah Maidan", "ON_HOLD", "Levothyroxine 50 mcg", 1, "PENDING", False)
+    order("RX-50211", "debasish", "Salt Lake", "PACKED", "Metformin 500 mg", 4, "PACKED", True, "APPROVED")
+    order("RX-50214", "rina", "Behala", "AWAITING_PHARMACIST", "Telmisartan 40 mg", 3, "PENDING", False, "PENDING")
+    order("RX-50219", "arif", "Howrah Maidan", "ON_HOLD", "Levothyroxine 50 mcg", 1, "PENDING", False, "REUPLOAD", "unreadable")
     db.commit()
     db.close()
     print("Seeded. Demo phones: 9000000001-3 customers, 9000000010 pharmacist, 9000000020 store staff")

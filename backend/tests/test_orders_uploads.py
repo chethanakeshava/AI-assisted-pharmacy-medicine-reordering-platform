@@ -76,3 +76,41 @@ def test_order_created_and_scoped_to_owner(client):
     assert o["status"] == "AWAITING_PHARMACIST" and o["total"] == 480
     assert client.get(f"/orders/{o['id']}", headers=other).status_code == 404
     assert client.get("/pharmacist/queue", headers=h).status_code == 403
+
+
+def test_order_items_include_medicine_names(client):
+    h = login(client, "9000000001")
+    first = client.get("/orders", headers=h).json()[0]
+    assert first["items"][0]["product_name"] == "Metformin 500 mg" and first["items"][0]["pack"]
+
+
+def test_reorder_copies_items_and_goes_back_to_pharmacist(client):
+    h = login(client, "9000000001")
+    old = client.get("/orders", headers=h).json()[0]          # seeded RX-50211, PACKED
+    r = client.post(f"/orders/{old['id']}/reorder", headers=h)
+    assert r.status_code == 201
+    new = r.json()
+    assert new["status"] == "AWAITING_PHARMACIST" and new["prescription_id"] == old["prescription_id"]
+    assert [(i["product_id"], i["qty"], i["status"]) for i in new["items"]] == \
+        [(i["product_id"], i["qty"], "PENDING") for i in old["items"]]
+
+
+def test_reorder_blocked_for_open_or_foreign_orders(client):
+    rina = login(client, "9000000002")
+    pending = client.get("/orders", headers=rina).json()[0]    # RX-50214 awaiting pharmacist
+    assert client.post(f"/orders/{pending['id']}/reorder", headers=rina).status_code == 409
+    other = login(client, "9000000001")
+    assert client.post(f"/orders/{pending['id']}/reorder", headers=other).status_code == 404
+
+
+def test_on_hold_order_shows_reason_to_customer(client):
+    arif = login(client, "9000000003")
+    o = client.get("/orders", headers=arif).json()[0]
+    assert client.get(f"/orders/{o['id']}", headers=arif).json()["review_note"].startswith("Image too blurry")
+
+
+def test_seeded_prescription_viewable_by_pharmacist(client):
+    ph = login(client, "9000000010")
+    q = client.get("/pharmacist/queue", headers=ph).json()
+    rx = next(o for o in q if o["code"] == "RX-50214")["prescription_id"]
+    assert client.get(f"/prescriptions/{rx}/image", headers=ph).status_code == 200

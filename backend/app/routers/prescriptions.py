@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import AccessLog, FamilyProfile, Prescription, User
+from ..models import AccessLog, FamilyProfile, Prescription, Product, User
 from ..security import current_user, require_role
 from ..services import crypto, extractor, matcher
 from ..services.uploads import read_prescription_image
@@ -37,8 +37,10 @@ def suggestions(rx_id: int, user: User = Depends(require_role("customer")), db: 
     return {"readable": d.get("readable"),
             "message": "Suggested from your photo. A pharmacist will check every item before anything is sent.",
             "items": [{"product_id": i["product_id"], "name": i["product_name"], "qty": i["qty"],
-                       "needs_check": i["low_confidence"]} for i in d["items"]
-                      if i["product_id"] and not i["blocked"]]}
+                       "pack": p.pack, "price": p.price, "schedule": p.schedule,
+                       "needs_check": i["low_confidence"]}
+                      for i in d["items"] if i["product_id"] and not i["blocked"]
+                      for p in [db.get(Product, i["product_id"])]]}
 
 
 @router.get("")
