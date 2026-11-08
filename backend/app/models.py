@@ -28,7 +28,7 @@ class User(Base):
     store_id: Mapped[int | None] = mapped_column(ForeignKey("stores.id"), nullable=True)
     lat: Mapped[float | None] = mapped_column(Float, nullable=True)
     lng: Mapped[float | None] = mapped_column(Float, nullable=True)
-    __table_args__ = (CheckConstraint("role IN ('customer','pharmacist','store_staff')", name="ck_user_role"),)
+    __table_args__ = (CheckConstraint("role IN ('customer','pharmacist','store_staff','ops')", name="ck_user_role"),)
 
 
 class FamilyProfile(Base):
@@ -91,6 +91,14 @@ class Order(Base):
     status: Mapped[str] = mapped_column(String(24), default="AWAITING_PHARMACIST")
     invoice_no: Mapped[str | None] = mapped_column(String(30), nullable=True)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    payment_method: Mapped[str] = mapped_column(String(10), default="COD")          # COD | UPI_TEST
+    payment_status: Mapped[str] = mapped_column(String(10), default="PENDING")      # PENDING | PAID_TEST
+    routing_note: Mapped[str | None] = mapped_column(String(120), nullable=True)
+    distance_km: Mapped[float | None] = mapped_column(Float, nullable=True)
+    handover_to: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    packed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    dispatched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    store: Mapped["Store | None"] = relationship()
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")
 
@@ -137,8 +145,11 @@ class RefillSchedule(Base):
     profile_id: Mapped[int | None] = mapped_column(ForeignKey("family_profiles.id"), nullable=True)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
     qty: Mapped[int] = mapped_column(Integer)
-    doses_per_day: Mapped[float] = mapped_column(Float, default=1)
+    doses_per_day: Mapped[float | None] = mapped_column(Float, nullable=True)  # None = not known; never guessed
     last_order_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    prescription_id: Mapped[int | None] = mapped_column(ForeignKey("prescriptions.id"), nullable=True)
+    last_reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    product: Mapped["Product"] = relationship()
 
 
 class Notification(Base):
@@ -157,6 +168,7 @@ class OtpCode(Base):
     phone: Mapped[str] = mapped_column(String(15), index=True)
     code_hash: Mapped[str] = mapped_column(String(64))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     attempts: Mapped[int] = mapped_column(Integer, default=0)
     used: Mapped[int] = mapped_column(Integer, default=0)
 

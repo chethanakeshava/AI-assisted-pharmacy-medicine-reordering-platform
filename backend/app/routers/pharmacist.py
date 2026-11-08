@@ -6,9 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..db import get_db
-from ..models import H1Register, Notification, Order, OrderItem, Prescription, Product, User
+from ..models import H1Register, Notification, Order, OrderItem, Prescription, Product, Store, User
 from ..security import require_role
 from ..services import gate
+from ..services.routing import route_order
 from ..services.serialize import order_out
 
 router = APIRouter(prefix="/pharmacist", tags=["pharmacist"])
@@ -156,12 +157,19 @@ def finalize(order_id: int, _: User = Pharma, db: Session = Depends(get_db)):
     if any(i.status == "PENDING" for i in o.items):
         raise HTTPException(409, "Every item must be approved or rejected first")
     approved = [i for i in o.items if i.status == "APPROVED"]
-    o.status = "APPROVED" if approved else "REJECTED"
+    o.status = "REJECTED" if not approved else "APPROVED"
+    if approved and not route_order(db, o):
+        o.status = "NO_STOCK"   # waits for the next stock file; the customer is told
     o.verified_at = datetime.now(timezone.utc)
     rx = db.get(Prescription, o.prescription_id) if o.prescription_id else None
     if rx:
         rx.status = "APPROVED" if approved else "REJECTED"
-    db.add(Notification(user_id=o.user_id, channel="sms",
-                        body=f"Order {o.code} {'approved and being prepared' if approved else 'could not be approved'}."))
+    if not approved:
+        text = f"Order {o.code} could not be approved."
+    elif o.status == "NO_STOCK":
+        text = f"Order {o.code} is approved. We are finding a store that has all your medicines."
+    else:
+        text = f"Order {o.code} is approved and being prepared at {db.get(Store, o.store_id).name}."
+    db.add(Notification(user_id=o.user_id, channel="sms", body=text))
     db.commit()
     return order_out(o)
