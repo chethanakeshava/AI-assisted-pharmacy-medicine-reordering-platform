@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -21,6 +23,7 @@ class ItemIn(BaseModel):
 
 
 class OrderIn(BaseModel):
+    payment_method: Literal["COD", "UPI_TEST"] = "COD"
     profile_id: int | None = None
     prescription_id: int | None = None
     items: list[ItemIn] = Field(min_length=1, max_length=30)
@@ -37,7 +40,8 @@ def create(body: OrderIn, user: User = Depends(require_role("customer")), db: Se
         if not rx or rx.user_id != user.id:
             raise HTTPException(404, "Prescription not found")
     order = Order(code="tmp", user_id=user.id, profile_id=body.profile_id,
-                  prescription_id=body.prescription_id, status="AWAITING_PHARMACIST")
+                  prescription_id=body.prescription_id, status="AWAITING_PHARMACIST",
+                  payment_method=body.payment_method)
     needs_rx = False
     for it in body.items:
         p = db.get(Product, it.product_id)
@@ -88,7 +92,8 @@ def reorder(order_id: int, user: User = Depends(require_role("customer")), db: S
     if rx and rx.status in {"REUPLOAD", "REJECTED"}:
         raise HTTPException(409, "This prescription needs to be uploaded again")
     new = Order(code="tmp", user_id=user.id, profile_id=old.profile_id,
-                prescription_id=old.prescription_id, status="AWAITING_PHARMACIST")
+                prescription_id=old.prescription_id, status="AWAITING_PHARMACIST",
+                payment_method=old.payment_method)
     for it in old.items:
         p = db.get(Product, it.product_id)
         if it.status == "REJECTED" or not is_sellable(db, p.schedule):
@@ -117,5 +122,20 @@ async def reupload(order_id: int, file: UploadFile = File(...),
     db.add(rx)
     db.flush()
     o.prescription_id, o.status = rx.id, "AWAITING_PHARMACIST"
+    db.commit()
+    return order_out(o)
+
+
+@router.post("/{order_id}/pay")
+def pay(order_id: int, user: User = Depends(require_role("customer")), db: Session = Depends(get_db)):
+    """Mock UPI payment (test mode). Allowed once the pharmacist has approved, because only then is the amount final."""
+    o = _own(db, order_id, user)
+    if o.payment_method != "UPI_TEST":
+        raise HTTPException(409, "This order is paid on delivery")
+    if o.payment_status == "PAID_TEST":
+        raise HTTPException(409, "This order is already paid")
+    if o.status not in {"APPROVED", "NO_STOCK", "PACKED"}:
+        raise HTTPException(409, "You can pay after the pharmacist approves your order")
+    o.payment_status = "PAID_TEST"
     db.commit()
     return order_out(o)
