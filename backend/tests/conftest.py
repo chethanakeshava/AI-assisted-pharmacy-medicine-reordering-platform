@@ -1,5 +1,6 @@
 import os
-os.environ["DATABASE_URL"] = "sqlite:///./test.db"
+# Use a SEPARATE, empty database for TEST_DATABASE_URL: the test seed wipes it.
+os.environ["DATABASE_URL"] = os.environ.get("TEST_DATABASE_URL", "sqlite:///./test.db")
 os.environ["UPLOAD_DIR"] = "./test_uploads"
 import pytest
 from fastapi.testclient import TestClient

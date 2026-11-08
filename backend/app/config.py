@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     otp_secret: str = "dev-only-otp"
     fernet_key: str = ""
     gemini_api_key: str = ""
+    cors_origins: str = "http://localhost:5173"   # comma-separated
+    otp_requests_per_10_min: int = 5
     ai_provider: str = "auto"  # auto | gemini | mock
     gemini_model: str = "gemini-2.5-flash"
     ai_timeout_seconds: int = 20
@@ -21,3 +23,15 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def assert_safe_config() -> None:
+    """Refuse to start outside dev with placeholder secrets (a leaked default key would expose prescriptions)."""
+    if settings.app_env == "dev":
+        return
+    weak = [n for n, v in {"JWT_SECRET": settings.jwt_secret, "OTP_SECRET": settings.otp_secret}.items()
+            if v in ("", "change-me", "dev-only-secret", "dev-only-otp") or len(v) < 24]
+    if not settings.fernet_key:
+        weak.append("FERNET_KEY")
+    if weak:
+        raise RuntimeError(f"Unsafe configuration for APP_ENV={settings.app_env}: set strong values for {', '.join(weak)}")

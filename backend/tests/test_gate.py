@@ -37,7 +37,7 @@ def test_approve_then_pack_then_dispatch(db):
 
 
 def test_only_pharmacist_can_approve(db):
-    store_user = db.scalars(select(User).where(User.role == "store_staff")).one()
+    store_user = db.scalars(select(User).where(User.role == "store_staff")).first()
     with pytest.raises(gate.GateError):
         gate.approve_item(db, pending_item(db), store_user)
 
