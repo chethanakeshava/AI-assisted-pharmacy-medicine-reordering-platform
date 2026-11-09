@@ -5,7 +5,7 @@ from app.config import assert_safe_config, settings
 from app.services.metrics import minutes_between
 from datetime import datetime, timedelta, timezone
 from .conftest import login, upload_rx
-
+from cryptography.fernet import Fernet
 
 # ---------- security ----------
 def test_otp_requests_are_rate_limited(client):
@@ -21,14 +21,24 @@ def test_security_headers_on_every_response(client):
 
 
 def test_production_refuses_default_secrets(monkeypatch):
-    assert_safe_config()   # dev is fine
+    assert_safe_config()  # dev is fine
+
     monkeypatch.setattr(settings, "app_env", "prod")
+    monkeypatch.setattr(settings, "jwt_secret", "dev-only-secret")
+    monkeypatch.setattr(settings, "otp_secret", "dev-only-otp")
+    monkeypatch.setattr(settings, "fernet_key", "invalid-key")
+
     with pytest.raises(RuntimeError) as e:
         assert_safe_config()
-    assert "JWT_SECRET" in str(e.value) and "FERNET_KEY" in str(e.value)
+
+    assert "JWT_SECRET" in str(e.value)
+    assert "OTP_SECRET" in str(e.value)
+    assert "FERNET_KEY" in str(e.value)
+
     monkeypatch.setattr(settings, "jwt_secret", "j" * 40)
     monkeypatch.setattr(settings, "otp_secret", "o" * 40)
-    monkeypatch.setattr(settings, "fernet_key", "k")
+    monkeypatch.setattr(settings, "fernet_key", Fernet.generate_key().decode())
+
     assert_safe_config()
 
 

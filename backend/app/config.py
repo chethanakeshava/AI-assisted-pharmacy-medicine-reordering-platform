@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
+from cryptography.fernet import Fernet
+#from cryptography.fernet import InvalidToken
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
     app_env: str = "dev"
@@ -26,12 +26,26 @@ settings = Settings()
 
 
 def assert_safe_config() -> None:
-    """Refuse to start outside dev with placeholder secrets (a leaked default key would expose prescriptions)."""
+    """Refuse to start outside dev with placeholder or invalid secrets."""
     if settings.app_env == "dev":
         return
-    weak = [n for n, v in {"JWT_SECRET": settings.jwt_secret, "OTP_SECRET": settings.otp_secret}.items()
-            if v in ("", "change-me", "dev-only-secret", "dev-only-otp") or len(v) < 24]
-    if not settings.fernet_key:
+
+    weak = [
+        n for n, v in {
+            "JWT_SECRET": settings.jwt_secret,
+            "OTP_SECRET": settings.otp_secret,
+        }.items()
+        if v in ("", "change-me", "dev-only-secret", "dev-only-otp")
+        or len(v) < 24
+    ]
+
+    try:
+        Fernet(settings.fernet_key.encode())
+    except (ValueError, TypeError):
         weak.append("FERNET_KEY")
+
     if weak:
-        raise RuntimeError(f"Unsafe configuration for APP_ENV={settings.app_env}: set strong values for {', '.join(weak)}")
+        raise RuntimeError(
+            f"Unsafe configuration for APP_ENV={settings.app_env}: "
+            f"set strong values for {', '.join(weak)}"
+        )
