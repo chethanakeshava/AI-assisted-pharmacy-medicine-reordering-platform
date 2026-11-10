@@ -1,37 +1,61 @@
 # MediBridge – AI-Assisted Pharmacy Medicine Reordering Platform
 
-**GitHub Repository:** https://github.com/chethanakeshava/AI-assisted-pharmacy-medicine-reordering-platform
+**MediBridge** is an AI-assisted pharmacy medicine reordering platform that simplifies prescription-based medicine ordering and pharmacy operations. It connects customers, pharmacists, and store staff through a centralized system for prescription submission, medicine verification, inventory management, order fulfilment, and refill tracking.
 
-MediBridge is an AI-assisted pharmacy medicine reordering platform designed to simplify prescription-based medicine ordering. It connects customers, pharmacists, and pharmacy staff through a centralized workflow for prescription submission, verification, inventory management, and order fulfilment.
+The platform uses AI to assist with prescription image extraction while keeping final prescription verification and approval under pharmacist control.
 
-The platform uses AI-assisted prescription extraction to help identify medicine details, while keeping the final prescription approval under pharmacist control.
+**GitHub Repository:** [AI-Assisted Pharmacy Medicine Reordering Platform](https://github.com/chethanakeshava/AI-assisted-pharmacy-medicine-reordering-platform)
+
+---
+
+## Project Overview
+
+MediBridge aims to make medicine reordering more convenient by connecting customers and pharmacy teams through a structured digital workflow.
+
+Customers can upload prescriptions, order medicines for themselves or family members, track orders, and manage refills. Pharmacists can review AI-extracted prescription details, while store staff manage inventory and fulfilment activities.
 
 ## Key Features
 
-### Customer
-- Sign in using phone number and OTP.
-- Upload medicine prescriptions.
-- View AI-extracted medicine details.
-- Track prescription verification and order status.
-- Upload a replacement image when a prescription is unclear.
-- Receive order notifications and refill reminders.
+### Customer Portal
+- Phone number and OTP-based authentication.
+- Upload prescription images.
+- View AI-extracted medicine information.
+- Order medicines for themselves or registered family members.
+- Search medicines and manage shopping carts.
+- Place orders and track order status.
+- Reorder medicines and manage refill reminders.
+- Communicate through customer-pharmacist messaging.
+- Receive order updates and notifications.
+- Access a multilingual interface.
 
-### Pharmacist
-- Review submitted prescriptions.
-- Verify extracted medicine details.
-- Approve or reject prescription items.
-- Handle unclear prescriptions that require customer action.
+### Pharmacist Portal
+- View submitted prescriptions in a verification queue.
+- Review AI-extracted medicine information.
+- Verify medicine names, strengths, and quantities.
+- Approve, edit, or reject prescription items.
+- Request a clearer prescription or additional information when needed.
+- Review prescriptions before orders proceed.
 
-### Store Staff
-- Manage medicine inventory.
-- Upload stock information through CSV.
-- Support order fulfilment workflows.
+### Store Staff Portal
+- View and manage order fulfilment tasks.
+- Support picking, packing, and order handover.
+- Manage medicine stock information.
+- Import inventory information using CSV files.
+
+### Operations Dashboard
+- Monitor order and fulfilment activity.
+- View operational information through a centralized dashboard.
+- Support pharmacy workflow monitoring.
 
 ### AI-Assisted Prescription Processing
-- Extract medicine information from prescription images.
-- Identify medicine names, strengths, and quantities.
-- Support pharmacist review before order approval.
-- Handle uncertain or unreadable prescription images through manual review.
+- Extract medicine information from prescription images using the Gemini API.
+- Identify medicine names, strengths, and quantities where readable.
+- Present extracted information for pharmacist review.
+- Support manual review when prescription details are unclear or uncertain.
+
+**Important:** AI extraction is an assistance mechanism. It does not independently approve prescriptions or replace pharmacist judgment.
+
+---
 
 ## Technology Stack
 
@@ -42,45 +66,47 @@ The platform uses AI-assisted prescription extraction to help identify medicine 
 | Database | SQLite, SQLAlchemy |
 | Authentication | Phone OTP, JWT |
 | AI Integration | Gemini API |
-| Testing | Pytest, Vitest |
+| Frontend Testing | Vitest |
+| Backend Testing | Pytest |
 | Version Control | Git, GitHub |
 
 ## System Architecture
 
 ```text
-             Customer / Pharmacist / Staff
-                         |
-                         v
-                 React Frontend
-                         |
-                         v
-                   FastAPI Backend
-                         |
-          +--------------+--------------+
-          |              |              |
-          v              v              v
-      Authentication  Order Logic   AI Processing
-          |              |              |
-          +--------------+--------------+
-                         |
-                         v
-                  SQLAlchemy ORM
-                         |
-                         v
-                     SQLite
+             Customer / Pharmacist / Store Staff
+                            |
+                            v
+                     React Frontend
+                            |
+                            v
+                     FastAPI Backend
+                            |
+          +-----------------+-----------------+
+          |                 |                 |
+          v                 v                 v
+   Authentication      Order Management   AI Processing
+          |                 |                 |
+          +-----------------+-----------------+
+                            |
+                            v
+                      SQLAlchemy ORM
+                            |
+                            v
+                          SQLite
 ```
 
 ## Application Workflow
 
-1. Customer signs in using their registered phone number and OTP.
-2. Customer uploads a prescription image.
-3. The AI-assisted service extracts medicine information.
-4. The extracted information is presented for pharmacist verification.
-5. The pharmacist reviews and approves or rejects the prescription items.
-6. Approved orders proceed through the fulfilment workflow.
-7. Customers can track order updates and receive refill reminders.
+1. A customer signs in using their registered phone number and OTP.
+2. The customer uploads a prescription image.
+3. The AI-assisted service extracts available medicine information.
+4. Extracted details are presented to the pharmacist for verification.
+5. The pharmacist reviews and approves, edits, or rejects prescription items.
+6. The customer proceeds with the medicine ordering process.
+7. Store staff handle the order fulfilment workflow.
+8. Customers can track order updates and manage future refills.
 
-**Important:** AI extraction is an assistance mechanism, not a substitute for pharmacist verification.
+---
 
 ## Project Structure
 
@@ -89,6 +115,10 @@ AI-assisted-pharmacy-medicine-reordering-platform/
 │
 ├── backend/
 │   ├── app/
+│   │   ├── routers/
+│   │   ├── models/
+│   │   ├── services/
+│   │   └── main.py
 │   ├── tests/
 │   ├── sample_data/
 │   ├── sample_prescriptions/
@@ -96,14 +126,21 @@ AI-assisted-pharmacy-medicine-reordering-platform/
 │   └── .env.example
 │
 ├── frontend/
-│   ├── src/
 │   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── api.js
+│   │   └── styles.css
 │   ├── package.json
 │   └── vite.config.js
 │
+├── deployment.md
 ├── .gitignore
 └── README.md
 ```
+
+---
 
 ## Getting Started
 
@@ -111,7 +148,7 @@ AI-assisted-pharmacy-medicine-reordering-platform/
 
 Install the following:
 
-- Python 3.12+
+- Python 3.12 or compatible project-supported version
 - Node.js 18+
 - npm
 - Git
@@ -132,13 +169,16 @@ Open a terminal:
 cd backend
 ```
 
-Create and activate a virtual environment:
-
-**Windows PowerShell**
+Create a virtual environment:
 
 ```powershell
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+python -m venv .venv
+```
+
+Activate it using Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
 Install dependencies:
@@ -147,15 +187,19 @@ Install dependencies:
 pip install -r requirements.txt
 ```
 
-Create your environment file:
+Create the environment file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Configure the required environment variables in `.env`. Refer to `.env.example` for the exact variable names. Do not commit API keys or secrets.
+Configure the required environment variables in `.env`, including the AI API key if AI prescription extraction is enabled.
 
-Initialize the database with sample data:
+Do not commit API keys or other sensitive credentials.
+
+Initialize the database and sample data using the project's supported setup process.
+
+If the seed module is available in your checkout, run:
 
 ```bash
 python -m app.seed
@@ -195,9 +239,11 @@ Open the frontend URL displayed in the terminal, usually:
 
 `http://localhost:5173`
 
+---
+
 ## Demo Login Accounts
 
-The following seeded accounts are available for local development and testing.
+The following seeded accounts are intended for local development and testing.
 
 | Role | Phone Number |
 |---|---|
@@ -208,13 +254,15 @@ The following seeded accounts are available for local development and testing.
 | Store Staff | `9000000020` |
 | Operations | `9000000030` |
 
-**OTP:** In development mode, the OTP is generated dynamically and returned by the API. Use the OTP displayed by the application/API during local testing.
+**OTP:** In development mode, the OTP is generated dynamically. Use the OTP returned by the application or API during local testing.
 
-These are test accounts only. Do not use real patient information.
+These accounts are for demonstration purposes only. Do not use real patient information.
+
+---
 
 ## Running Tests
 
-### Backend
+### Backend Tests
 
 From the `backend` directory:
 
@@ -222,7 +270,7 @@ From the `backend` directory:
 python -m pytest -q
 ```
 
-### Frontend
+### Frontend Tests
 
 From the `frontend` directory:
 
@@ -232,43 +280,53 @@ npm test -- --run
 
 ### Production Build
 
+From the `frontend` directory:
+
 ```bash
 npm run build
 ```
 
+---
+
 ## Security Considerations
 
-- OTP values are stored as hashes.
-- OTP expiry and attempt limits are enforced.
-- JWT-based authentication protects application routes.
-- Role-based access controls restrict protected operations.
-- Sensitive configuration is maintained through environment variables.
-- Prescription uploads require appropriate validation.
-- Real patient information and API credentials should never be committed to the repository.
+MediBridge includes security measures intended to protect application workflows:
 
-For production deployment, additional controls such as secure file storage, database backups, audit logging, HTTPS, and production-grade monitoring should be configured.
+- OTP-based authentication.
+- Hashed OTP storage.
+- OTP expiry and attempt limits.
+- JWT-based authentication.
+- Role-based access controls.
+- Environment-based configuration for sensitive credentials.
+- Prescription upload validation.
+
+For production deployment, additional controls such as secure document storage, database backups, audit logging, HTTPS, and production monitoring should be configured.
 
 ## Current Limitations
 
 - The application is currently intended for local development and demonstration.
-- Real SMS and payment gateway integrations are not configured.
+- Real SMS/OTP provider integration is not configured.
+- Real payment gateway integration is not configured; payment functionality should be treated as a mock or demonstration workflow.
 - Production cloud deployment is not currently available.
 - Production-grade prescription document storage and monitoring require further implementation.
-- AI-generated prescription details must be reviewed by a pharmacist before approval.
+- AI-extracted prescription information requires pharmacist verification before approval.
 
 ## Future Enhancements
 
 - Integrate a real SMS/OTP provider.
 - Add secure cloud-based prescription storage.
-- Integrate online payment gateways.
+- Integrate real online payment gateways.
 - Improve medicine availability and pharmacy routing.
-- Add advanced refill prediction and reminder scheduling.
+- Enhance refill prediction and reminder scheduling.
 - Introduce production monitoring and audit trails.
-
-## Project Objective
-
-MediBridge aims to make pharmacy medicine reordering more convenient and organized by combining AI-assisted prescription processing with pharmacist-led verification and structured order management.
+- Improve deployment scalability and reliability.
 
 ---
 
-**Note:** This project is developed for demonstration and evaluation purposes. It is not a replacement for professional medical or pharmaceutical judgment.
+## Project Objective
+
+MediBridge aims to simplify pharmacy medicine reordering by combining AI-assisted prescription processing with pharmacist-led verification, customer convenience, and structured pharmacy operations.
+
+It demonstrates how AI, web technologies, and role-based workflows can work together to improve the medicine ordering experience.
+
+**Disclaimer:** MediBridge is an educational and demonstration project. It is not a replacement for professional medical or pharmaceutical judgment. Real patient information should not be used in the demonstration environment.
