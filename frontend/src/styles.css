@@ -93,3 +93,62 @@ label { display: block; font-weight: 600; margin-bottom: .3rem; }
 .q-item.sel { border-color: var(--primary); background: var(--primary-soft); }
 .ai-low { background: var(--warn-soft); }
 @media (max-width: 860px) { .queue, .compare { grid-template-columns: 1fr; } .rx-img { max-height: 50vh; } }
+
+.auth-page { min-height: 100vh; display: grid; grid-template-columns: minmax(280px, 41.5%) minmax(0, 58.5%); background: var(--bg); }
+.auth-hero { position: relative; display: flex; flex-direction: column; justify-content: space-between; min-height: 100vh; padding: clamp(1.5rem, 4vw, 3.5rem); color: #fff; background: var(--primary-dark) url("/login-pharmacy.png") center / cover no-repeat; isolation: isolate; }
+.auth-hero::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(7, 42, 42, .42), rgba(7, 42, 42, .86)); }
+.auth-hero-brand { display: block; font-size: 1.4rem; }
+.auth-hero-main { width: min(100%, 32rem); margin: auto 0; }
+.auth-eyebrow { margin: 0 0 .7rem; color: var(--primary); font-size: .85rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.auth-hero .auth-eyebrow { color: #b7d8d3; }
+.auth-hero-main h2 { max-width: 26rem; margin: 0 0 .8rem; font-size: clamp(2.35rem, 3.25vw, 3.1rem); line-height: 1.16; }
+.auth-hero-copy { max-width: 29rem; margin: 0 0 1.8rem; color: rgba(255,255,255,.86); font-size: 1.12rem; line-height: 1.5; }
+.auth-benefits { margin: 0; padding: 1.15rem 1.35rem; list-style: none; border-radius: 10px; background: rgba(3, 54, 51, .76); }
+.auth-benefits li + li { margin-top: .7rem; }
+.auth-benefits strong, .auth-benefits span { display: block; }
+.auth-benefits strong { font-size: 1.02rem; }
+.auth-benefits span { margin-top: .18rem; color: rgba(255,255,255,.82); font-size: .92rem; }
+.auth-hero-footer { margin: 1rem 0 0; color: rgba(255,255,255,.76); font-size: .88rem; }
+.auth-panel { display: flex; align-items: center; justify-content: center; min-width: 0; padding: clamp(1.5rem, 5vw, 4rem); }
+.auth-panel-content { width: min(100%, 460px); }
+.auth-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .6rem; }
+.auth-heading h1 { color: var(--primary); font-size: 2rem; margin: 0; }
+.auth-tagline { margin: 0 0 1.35rem; color: var(--muted); font-size: 1rem; }
+.auth-card { padding: 1.65rem; background: var(--surface); border: 1px solid #e8e9e4; border-radius: 14px; box-shadow: 0 3px 8px rgba(31, 42, 41, .07), 0 12px 32px rgba(31, 42, 41, .08); }
+.auth-card .field { margin-bottom: 1rem; }
+.auth-card label { font-size: 1.05rem; }
+.auth-card input[type=tel], .auth-card input[type=text] { min-height: 62px; padding: .85rem 1rem; font-size: 1.05rem; }
+.auth-helper { display: block; margin-top: .45rem; color: var(--muted); font-size: .88rem; }
+.auth-submit.btn.hero { min-height: 62px; border-radius: 8px; font-size: 1.1rem; }
+.auth-switch { margin: 1rem 0 0; text-align: center; font-size: .95rem; }
+.auth-switch .chip { padding: .45rem 1rem; font-size: .9rem; }
+.auth-switch--left { text-align: left; }
+.auth-terms { margin: .7rem 0; color: var(--muted); font-size: .84rem; }
+.auth-demos { margin-top: 1rem; font-size: .85rem; }
+.auth-demos summary { cursor: pointer; }
+.auth-demos .chips { margin-top: .65rem; }
+.auth-demo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+.auth-demo-grid .chip { padding: .4rem .55rem; font-size: .78rem; color: var(--primary); }
+.auth-page--code { grid-template-columns: minmax(0, 1fr); min-height: 100vh; }
+.auth-page--code .auth-hero { display: none; }
+.auth-page--code .auth-panel { min-height: 100vh; }
+.auth-page--code .auth-panel-content { width: min(100%, 460px); }
+.auth-page--code .auth-heading { margin-bottom: .85rem; }
+.auth-page--code .auth-heading h1 { color: var(--ink); font-size: 2rem; }
+.auth-page--code .auth-panel .sub { margin-bottom: 1rem; font-size: 1.05rem; }
+.auth-page--code .auth-card { padding: 1.65rem; box-shadow: 0 3px 8px rgba(31, 42, 41, .07), 0 12px 32px rgba(31, 42, 41, .08); }
+.auth-code-input { letter-spacing: .45em; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 760px) {
+  .auth-page { grid-template-columns: minmax(0, 1fr); }
+  .auth-hero { min-height: 210px; padding: 1.25rem 1.5rem; }
+  .auth-hero-main { margin: .8rem 0; }
+  .auth-hero-main h2 { font-size: 1.55rem; }
+  .auth-hero-copy, .auth-benefits, .auth-hero-footer { display: none; }
+  .auth-panel { padding: 1.5rem 1rem 2rem; }
+  .auth-panel-content { width: min(100%, 560px); }
+  .auth-card, .auth-page--code .auth-card { padding: 1.25rem; }
+  .auth-heading h1 { font-size: 1.55rem; }
+  .auth-page--code .auth-heading h1 { font-size: 1.65rem; }
+  .auth-page--code .auth-panel { min-height: 100vh; }
+}
